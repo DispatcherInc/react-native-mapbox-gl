@@ -11,11 +11,15 @@
 | `scrollEnabled` | `bool`  |  Optional | `true`  | Whether the map can be scrolled |
 | `zoomEnabled` | `bool`  |  Optional | `true`  | Whether the map zoom level can be changed |
 |`showsUserLocation` | `bool` | Optional | `false` | Whether the user's location is shown on the map. Note - the map will not zoom to their location.|
-| `styleURL` | `string` | Optional | Mapbox Streets |  A Mapbox GL style sheet. Defaults to `streets-v8`.
+| `styleURL` | `string` | required | Mapbox Streets |  A Mapbox style. Defaults to `streets`.
 | `annotations` | `array` | Optional | NA |  An array of annotation objects. See [annotation detail](https://github.com/bsudekum/react-native-mapbox-gl/blob/master/ios/API.md#annotations)
 | `direction`  | `double` | Optional | `0` | Heading of the map in degrees where 0 is north and 180 is south |
 | `debugActive`  | `bool` | Optional | `false` | Turns on debug mode. |
 | `style`  | flexbox `view` | Optional | NA | Styles the actual map view container |
+| `userTrackingMode` | `int` | Optional | `this.userTrackingMode.none` | Must add `mixins` to use. Valid values are `this.userTrackingMode.none`, `this.userTrackingMode.follow`, `this.userTrackingMode.followWithCourse`, `this.userTrackingMode.followWithHeading` |
+| `attributionButtonIsHidden`  | `bool` | Optional | `false` | Whether attribution button is visible in lower right corner. *If true you must still attribute OpenStreetMap in your app. [Ref](https://www.mapbox.com/about/maps/)* |
+| `logoIsHidden`  | `bool` | Optional | `false` | Whether logo is visible in lower left corner. |
+| `compassIsHidden`  | `bool` | Optional | `false` | Whether compass is visible when map is rotated. |
 
 ## Events
 
@@ -26,6 +30,7 @@
 | `onOpenAnnotation` | `{title: null, subtitle: null, latitude: 0, longitude: 0}` | Fired when focusing a an annotation.
 | `onUpdateUserLocation` | `{latitude: 0, longitude: 0, headingAccuracy: 0, magneticHeading: 0, trueHeading: 0, isUpdating: false}` | Fired when the users location updates.
 | `onRightAnnotationTapped` | `{title: null, subtitle: null, latitude: 0, longitude: 0}` | Fired when user taps `rightCalloutAccessory`
+| `onLongPress` | `{latitude: 0, longitude: 0, screenCoordY, screenCoordX}` | Fired when the user taps and holds screen for 1 second.
 
 
 ## Methods for Modifying the Map State
@@ -42,16 +47,38 @@ These methods require you to use `MapboxGLMap.Mixin` to access the methods. Each
 | `selectAnnotationAnimated` | `mapViewRef`, `annotationPlaceInArray` | Open the callout of the selected annotation. This method works with the current annotations on the map. `annotationPlaceInArray` starts at 0 and refers to the first annotation.
 | `removeAnnotation`  | `mapViewRef`, `annotationPlaceInArray` | Removes the selected annotation from the map. This method works with the current annotations on the map. `annotationPlaceInArray` starts at 0 and refers to the first annotation.
 | `setVisibleCoordinateBoundsAnimated`  | `mapViewRef`, `latitude1`, `longitude1`, `latitude2`, `longitude2`, `edgePadding`  | Changes the viewport to fit the given coordinate bounds and some additional padding on each side.
+| `setUserTrackingMode` | `mapViewRef`, `userTrackingMode` | Modifies the tracking mode. Valid args: `this.userTrackingMode.none`, `this.userTrackingMode.follow`, `this.userTrackingMode.followWithCourse`, `this.userTrackingMode.followWithHeading`
 
-## GL Styles
+## Styles
 
-You can change the `styleURL` to any valid GL stylesheet, here are a few:
+This ships with 6 styles included:
 
-* `asset://styles/dark-v8.json`
-* `asset://styles/light-v8.json`
-* `asset://styles/emerald-v8.json`
-* `asset://styles/streets-v8.json`
-* `asset://styles/satellite-v8.json`
+* `streets`
+* `emerald`
+* `dark`
+* `light`
+* `satellite`
+* `hybrid`
+
+To use one of these, make you add mixins:
+
+```js
+mixins: [Mapbox.Mixin]
+```
+
+Then you can access each style by:
+
+```jsx
+styleURL={this.mapStyles.emerald}
+```
+
+## Custom styles
+
+You can also create a custom style in [Mapbox Studio](https://www.mapbox.com/studio/) and add it your map. Simply grab the style url. It should look something like:
+
+```
+mapbox://styles/bobbysud/cigtw1pzy0000aam2346f7ex0
+```
 
 ## Annotations
 ```json

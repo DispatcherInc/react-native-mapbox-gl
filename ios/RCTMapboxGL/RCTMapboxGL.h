@@ -28,6 +28,7 @@
 - (void)setShowsUserLocation:(BOOL)showsUserLocation;
 - (void)setStyleURL:(NSURL *)styleURL;
 - (void)setZoomLevel:(double)zoomLevel;
+- (void)setUserTrackingMode:(int)userTrackingMode;
 - (void)setZoomLevelAnimated:(double)zoomLevel;
 - (void)setDirectionAnimated:(int)heading;
 - (void)setCenterCoordinateAnimated:(CLLocationCoordinate2D)coordinates;
@@ -35,6 +36,9 @@
 - (void)selectAnnotationAnimated:(NSUInteger)annotationInArray;
 - (void)removeAnnotation:(NSUInteger)annotationInArray;
 - (void)setVisibleCoordinateBounds:(MGLCoordinateBounds)bounds edgePadding:(UIEdgeInsets)padding animated:(BOOL)animated;
+- (void)setAttributionButtonVisibility:(BOOL)isVisible;
+- (void)setLogoVisibility:(BOOL)isVisible;
+- (void)setCompassVisibility:(BOOL)isVisible;
 
 @end
 

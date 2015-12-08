@@ -35,6 +35,10 @@
     NSURL *_styleURL;
     double _zoomLevel;
     UIButton *_rightCalloutAccessory;
+    int _userTrackingMode;
+    BOOL _attributionButton;
+    BOOL _logo;
+    BOOL _compass;
 }
 
 RCT_EXPORT_MODULE();
@@ -74,6 +78,10 @@ RCT_EXPORT_MODULE();
         _map.showsUserLocation = _showsUserLocation;
         _map.styleURL = _styleURL;
         _map.zoomLevel = _zoomLevel;
+        _map.userTrackingMode = _userTrackingMode;
+        [_map.attributionButton setHidden:_attributionButton];
+        [_map.logoView setHidden:_logo];
+        [_map.compassView setHidden:_compass];
     } else {
         /* We need to have a height/width specified in order to render */
         if (_accessToken && _styleURL && self.bounds.size.height > 0 && self.bounds.size.width > 0) {
@@ -85,10 +93,14 @@ RCT_EXPORT_MODULE();
 - (void)createMap
 {
     [MGLAccountManager setAccessToken:_accessToken];
-    _map = [[MGLMapView alloc] initWithFrame:self.bounds styleURL:_styleURL];
+    _map = [[MGLMapView alloc] initWithFrame:self.bounds];
     _map.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _map.delegate = self;
-    _map.userTrackingMode = MGLUserTrackingModeFollow;
+    
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+    [longPress setMinimumPressDuration:1];
+    [self addGestureRecognizer:longPress];
+    
     [self updateMap];
     [self addSubview:_map];
     [self layoutSubviews];
@@ -97,7 +109,9 @@ RCT_EXPORT_MODULE();
 
 - (void)layoutSubviews
 {
-    [self updateMap];
+    if (_annotations.count == 0) {
+        [self updateMap];
+    }
     _map.frame = self.bounds;
 }
 
@@ -115,7 +129,7 @@ RCT_EXPORT_MODULE();
             }
             _annotations = nil;
         }
-        
+
         _annotations = _newAnnotations;
         for (int i = 0; i < [_newAnnotations count]; i++) {
             [_map addAnnotation:_newAnnotations[i]];
@@ -210,16 +224,44 @@ RCT_EXPORT_MODULE();
     [self updateMap];
 }
 
-- (void)setStyleURL:(NSURL*)styleURL
+- (void)setStyleURL:(NSURL *)styleURL
 {
     _styleURL = styleURL;
     [self updateMap];
 }
 
+- (void)setAttributionButtonVisibility:(BOOL)isVisible
+{
+    _attributionButton = isVisible;
+    [self updateMap];
+}
+
+- (void)setLogoVisibility:(BOOL)isVisible
+{
+    _logo = isVisible;
+    [self updateMap];
+}
+
+- (void)setCompassVisibility:(BOOL)isVisible
+{
+    _compass = isVisible;
+    [self updateMap];
+}
+
+- (void)setUserTrackingMode:(int)userTrackingMode
+{
+    if (userTrackingMode > 3 || userTrackingMode < 0) {
+        _userTrackingMode = 0;
+    } else {
+        _userTrackingMode = userTrackingMode;
+    }
+    [self performSelector:@selector(updateMap) withObject:nil afterDelay:0.2];
+}
+
 - (void)setRightCalloutAccessory:(UIButton *)rightCalloutAccessory
 {
     _rightCalloutAccessory = rightCalloutAccessory;
-    [self performSelector:@selector(updateAnnotations) withObject:nil afterDelay:0.1];
+    [self updateAnnotations];
 }
 
 -(void)setDirectionAnimated:(int)heading
@@ -307,7 +349,13 @@ RCT_EXPORT_MODULE();
 }
 
 - (BOOL)mapView:(RCTMapboxGL *)mapView annotationCanShowCallout:(id <MGLAnnotation>)annotation {
-    return YES;
+    NSString *title = [(RCTMGLAnnotation *) annotation title];
+    NSString *subtitle = [(RCTMGLAnnotation *) annotation subtitle];
+    if ([title length] != 0 || [subtitle length] != 0 ) {
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 - (void)selectAnnotationAnimated:(NSUInteger)annotationInArray
@@ -363,12 +411,11 @@ RCT_EXPORT_MODULE();
 {
     NSString *url = [(RCTMGLAnnotation *) annotation annotationImageURL];
     if (!url) { return nil; }
-    NSString *id = [(RCTMGLAnnotation *) annotation id];
+
     CGSize imageSize = [(RCTMGLAnnotation *) annotation annotationImageSize];
-    MGLAnnotationImage *annotationImage = [mapView dequeueReusableAnnotationImageWithIdentifier:id];
+    MGLAnnotationImage *annotationImage = [mapView dequeueReusableAnnotationImageWithIdentifier:url];
 
     if (!annotationImage) {
-
         UIImage *image = nil;
         if ([url hasPrefix:@"image!"]) {
             NSString* localImagePath = [url substringFromIndex:6];
@@ -376,15 +423,50 @@ RCT_EXPORT_MODULE();
         } else {
             image = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:url]]];
         }
-
         UIGraphicsBeginImageContextWithOptions(imageSize, NO, 0.0);
         [image drawInRect:CGRectMake(0, 0, imageSize.width, imageSize.height)];
         UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
-        annotationImage = [MGLAnnotationImage annotationImageWithImage:newImage reuseIdentifier:id];
+        annotationImage = [MGLAnnotationImage annotationImageWithImage:newImage reuseIdentifier:url];
     }
-
+    
     return annotationImage;
+}
+
+- (void)handleSingleTap:(UITapGestureRecognizer *)sender
+{
+    CLLocationCoordinate2D location = [_map convertPoint:[sender locationInView:_map] toCoordinateFromView:_map];
+    CGPoint screenCoord = [sender locationInView:_map];
+    
+    NSDictionary *event = @{ @"target": self.reactTag,
+                             @"src": @{
+                                     @"latitude": @(location.latitude),
+                                     @"longitude": @(location.longitude),
+                                     @"screenCoordY": @(screenCoord.y),
+                                     @"screenCoordX": @(screenCoord.x)
+                                     }
+                             };
+    
+    [_eventDispatcher sendInputEventWithName:@"onTap" body:event];
+}
+
+- (void)handleLongPress:(UITapGestureRecognizer *)sender
+{
+    if (sender.state == UIGestureRecognizerStateBegan) {
+        CLLocationCoordinate2D location = [_map convertPoint:[sender locationInView:_map] toCoordinateFromView:_map];
+        CGPoint screenCoord = [sender locationInView:_map];
+        
+        NSDictionary *event = @{ @"target": self.reactTag,
+                                 @"src": @{
+                                         @"latitude": @(location.latitude),
+                                         @"longitude": @(location.longitude),
+                                         @"screenCoordY": @(screenCoord.y),
+                                         @"screenCoordX": @(screenCoord.x)
+                                         }
+                                 };
+        
+        [_eventDispatcher sendInputEventWithName:@"onLongPress" body:event];
+    }
 }
 
 - (unsigned int)intFromHexString:(NSString *)hexStr

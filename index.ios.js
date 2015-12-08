@@ -27,7 +27,12 @@ var MapMixins = {
   },
   setVisibleCoordinateBoundsAnimated(mapRef, latitudeSW, longitudeSW, latitudeNE, longitudeNE, edge) {
     NativeModules.MapboxGLManager.setVisibleCoordinateBoundsAnimated(React.findNodeHandle(this.refs[mapRef]), latitudeSW, longitudeSW, latitudeNE, longitudeNE, edge);
-  }
+  },
+  setUserTrackingMode(mapRef, userTrackingMode) {
+    NativeModules.MapboxGLManager.setUserTrackingMode(React.findNodeHandle(this.refs[mapRef]), userTrackingMode);
+  },
+  mapStyles: NativeModules.MapboxGLManager.mapStyles,
+  userTrackingMode: NativeModules.MapboxGLManager.userTrackingMode
 };
 
 var MapView = React.createClass({
@@ -49,6 +54,9 @@ var MapView = React.createClass({
   _onUpdateUserLocation(event: Event) {
     if (this.props.onUpdateUserLocation) this.props.onUpdateUserLocation(event.nativeEvent.src);
   },
+  _onLongPress(event: Event) {
+    if (this.props.onLongPress) this.props.onLongPress(event.nativeEvent.src);
+  },
   propTypes: {
     showsUserLocation: React.PropTypes.bool,
     rotateEnabled: React.PropTypes.bool,
@@ -60,6 +68,7 @@ var MapView = React.createClass({
     styleURL: React.PropTypes.string,
     clipsToBounds: React.PropTypes.bool,
     debugActive: React.PropTypes.bool,
+    userTrackingMode: React.PropTypes.number,
     attributionButton: React.PropTypes.bool,
     centerCoordinate: React.PropTypes.shape({
       latitude: React.PropTypes.number.isRequired,
@@ -87,6 +96,9 @@ var MapView = React.createClass({
         url: React.PropTypes.string
       })
     })),
+    attributionButtonIsHidden: React.PropTypes.bool,
+    logoIsHidden: React.PropTypes.bool,
+    compassIsHidden: React.PropTypes.bool,
     onRegionChange: React.PropTypes.func,
     onRegionWillChange: React.PropTypes.func,
     onOpenAnnotation: React.PropTypes.func,
@@ -104,9 +116,12 @@ var MapView = React.createClass({
       rotationEnabled: true,
       scrollEnabled: true,
       showsUserLocation: false,
-      styleUrl: 'asset://styles/streets-v8.json',
+      styleUrl: this.Mixin.mapStyles.streets,
       zoomEnabled: true,
-      zoomLevel: 0
+      zoomLevel: 0,
+      attributionButtonIsHidden: false,
+      logoIsHidden: false,
+      compassIsHidden: false
     };
   },
   render() {
@@ -116,7 +131,8 @@ var MapView = React.createClass({
       onRegionWillChange={this._onRegionWillChange}
       onOpenAnnotation={this._onOpenAnnotation}
       onRightAnnotationTapped={this._onRightAnnotationTapped}
-      onUpdateUserLocation={this._onUpdateUserLocation} />;
+      onUpdateUserLocation={this._onUpdateUserLocation}
+      onLongPress={this._onLongPress} />;
   }
 });
 

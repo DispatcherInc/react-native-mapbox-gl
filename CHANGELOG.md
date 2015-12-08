@@ -1,3 +1,42 @@
+#v2.1.3
+
+* [iOS] Adds props `attributionButtonIsHidden`, `logoIsHidden` and `compassIsHidden` for showing and hiding their respective view.
+
+#v2.1.2
+
+* [Android] fixes a missing prop type bug [#175](https://github.com/mapbox/react-native-mapbox-gl/issues/175)
+
+#v2.1.0
+
+* Adds support for `react-native@0.16.0`
+* [iOS] Adds event handler `onTap`. Fired when user taps screen. Returns lat,lng and xy screen coordinates
+* [iOS] Adds event handler `onLongPress`. Fired when user taps and holds screen for 1 second. Returns lat,lng and xy screen coordinates
+
+# v2.0.0
+
+* [iOS] Adds optional pod installation
+* [iOS] If showsUserLocation is false the Mapbox layer will no longer require location permissions
+* [iOS] Fixed a bug where icons would overwrite other icons
+* [iOS] Minimum deployment level set to 7.0
+* [iOS] Fixed a bug where when returning to map/rotating the UI, markers would disappear
+* [iOS] An empty popup will no longer be shown when there is no title and text
+* [iOS] Adds userTrackingMode
+* [Android] Upgrades to react-native v0.14.x
+
+### Breaking changes
+iOS no longer supports the `assets://` path for styles. Styles can be set via normal `mapbox://` url or via:
+
+```js
+this.mapStyles.light
+this.mapStyles.streets
+this.mapStyles.dark
+this.mapStyles.satellite
+this.mapStyles.hybrid
+this.mapStyles.emerald
+```
+
+`this.mapStyles` is passed in via mixins. If you prefer not pass in mixins, you can just as easily reference the emerald style via `styleURL={'mapbox://styles/mapbox/emerald-v8'}`
+
 # v1.1.0
 
 * Fixed a regression in the `Header Search Paths`

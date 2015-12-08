@@ -10,7 +10,7 @@ var ReactMapView = requireNativeComponent('RCTMapbox', {
       annotations: React.PropTypes.arrayOf(React.PropTypes.shape({
         title: React.PropTypes.string,
         subtitle: React.PropTypes.string,
-        coordinates: React.PropTypes.arrayOf(),
+        coordinates: React.PropTypes.array,
         alpha: React.PropTypes.number,
         fillColor: React.PropTypes.string,
         strokeColor: React.PropTypes.string,
@@ -35,7 +35,15 @@ var ReactMapView = requireNativeComponent('RCTMapbox', {
       scaleX: React.PropTypes.number,
       translateY: React.PropTypes.number,
       translateX: React.PropTypes.number,
-      rotation: React.PropTypes.number
+      rotation: React.PropTypes.number,
+      // Fix for https://github.com/mapbox/react-native-mapbox-gl/issues/175
+      renderToHardwareTextureAndroid: React.PropTypes.bool,
+      onLayout: React.PropTypes.bool,
+      accessibilityLiveRegion: React.PropTypes.string,
+      accessibilityComponentType: React.PropTypes.string,
+      accessibilityLabel: React.PropTypes.string,
+      testID: React.PropTypes.string,
+      importantForAccessibility: React.PropTypes.string
     },
     defaultProps() {
       return {
